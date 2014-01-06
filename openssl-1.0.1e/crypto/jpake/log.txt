@@ -1,0 +1,47 @@
+jpake.c:void JPAKE_STEP1_init(JPAKE_STEP1 *s1)
+jpake.c:void JPAKE_STEP1_release(JPAKE_STEP1 *s1)
+jpake.c:int JPAKE_STEP1_generate(JPAKE_STEP1 *send, JPAKE_CTX *ctx)
+jpake.c:int JPAKE_STEP1_process(JPAKE_CTX *ctx, const JPAKE_STEP1 *received)
+jpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X3_IS_NOT_LEGAL);
+jpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X4_IS_NOT_LEGAL);
+jpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X3_FAILED);
+jpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X4_FAILED);
+jpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X4_IS_ONE);
+jpake_err.c:{ERR_FUNC(JPAKE_F_JPAKE_STEP1_PROCESS),	"JPAKE_STEP1_process"},
+jpake.h:    } JPAKE_STEP1;
+jpake.h: * Note that JPAKE_STEP1 can be used multiple times before release
+jpake.h:void JPAKE_STEP1_init(JPAKE_STEP1 *s1);
+jpake.h:int JPAKE_STEP1_generate(JPAKE_STEP1 *send, JPAKE_CTX *ctx);
+jpake.h:int JPAKE_STEP1_process(JPAKE_CTX *ctx, const JPAKE_STEP1 *received);
+jpake.h:void JPAKE_STEP1_release(JPAKE_STEP1 *s1);
+jpake.h:#define JPAKE_F_JPAKE_STEP1_PROCESS			 101
+jpaketest.c:    JPAKE_STEP1 alice_s1;
+jpaketest.c:    JPAKE_STEP1 bob_s1;
+jpaketest.c:    JPAKE_STEP1_init(&alice_s1);
+jpaketest.c:    JPAKE_STEP1_generate(&alice_s1, alice);
+jpaketest.c:    if(!JPAKE_STEP1_process(bob, &alice_s1))
+jpaketest.c:    JPAKE_STEP1_release(&alice_s1);
+jpaketest.c:    JPAKE_STEP1_init(&bob_s1);
+jpaketest.c:    JPAKE_STEP1_generate(&bob_s1, bob);
+jpaketest.c:    if(!JPAKE_STEP1_process(alice, &bob_s1))
+jpaketest.c:    JPAKE_STEP1_release(&bob_s1);
+Binary file mytest matches
+mytest.c:    JPAKE_STEP1 alice_s1;
+mytest.c:    JPAKE_STEP1 bob_s1;
+mytest.c:    JPAKE_STEP1_init(&alice_s1);
+mytest.c:    JPAKE_STEP1_generate(&alice_s1, alice);
+mytest.c:    if(!JPAKE_STEP1_process(bob, &alice_s1))
+mytest.c:    JPAKE_STEP1_release(&alice_s1);
+mytest.c:    JPAKE_STEP1_init(&bob_s1);
+mytest.c:    JPAKE_STEP1_generate(&bob_s1, bob);
+mytest.c:    if(!JPAKE_STEP1_process(alice, &bob_s1))
+mytest.c:    JPAKE_STEP1_release(&bob_s1);
+zhjpake.c:void JPAKE_STEP1_init(JPAKE_STEP1 *s1)
+zhjpake.c:void JPAKE_STEP1_release(JPAKE_STEP1 *s1)
+zhjpake.c:int JPAKE_STEP1_generate(JPAKE_STEP1 *send, JPAKE_CTX *ctx)
+zhjpake.c:int JPAKE_STEP1_process(JPAKE_CTX *ctx, const JPAKE_STEP1 *received)
+zhjpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X3_IS_NOT_LEGAL);
+zhjpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X4_IS_NOT_LEGAL);
+zhjpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X3_FAILED);
+zhjpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X4_FAILED);
+zhjpake.c:	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X4_IS_ONE);
