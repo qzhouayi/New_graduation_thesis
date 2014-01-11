@@ -1,0 +1,7 @@
+omdhke.c: In function ‘OMDHKE_Message_generate’:
+omdhke.c:80:2: warning: implicit declaration of function ‘print_bn’ [-Wimplicit-function-declaration]
+omdhke.c: At top level:
+omdhke.c:159:6: warning: conflicting types for ‘print_bn’ [enabled by default]
+omdhke.c:80:2: note: previous implicit declaration of ‘print_bn’ was here
+omdhketest.c:24:13: warning: ‘showbn’ defined but not used [-Wunused-function]
+omdhketest.c:32:12: warning: ‘run_zhjpake’ defined but not used [-Wunused-function]
