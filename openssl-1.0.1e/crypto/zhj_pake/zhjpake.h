@@ -1,4 +1,5 @@
 /*
+ * 
  */
 
 #ifndef HEADER_ZHJPAKE_H
@@ -17,18 +18,33 @@ extern "C" {
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 
-typedef struct ZHJPAKE_CTX ZHJPAKE_CTX;
-
+typedef struct 
+	{
+	BIGNUM *g;
+	BIGNUM *h;
+	BIGNUM *q;
+	BIGNUM *secret;
+	BIGNUM *r;
+	BIGNUM *key;
+	BN_CTX *ctx;
+	BIGNUM *y;
+	BIGNUM *y_;
+	char *peer_name;
+	char *name;
+	} ZHJPAKE_CTX;
+	
 typedef struct 
 	{
 	BIGNUM *y;
 	} ZHJPAKE_Message;
 
 /* Alloc and release ZHJPAKE_CTX */	
-ZHJPAKE_CTX *ZHJPAKE_CTX_new(const BIGNUM *g, const BIGNUM *q, 
-			 const BIGNUM *h, const char *password, const char *name, const char *peer_name);
+ZHJPAKE_CTX *ZHJPAKE_CTX_new(const char *secret, const char *name, const char *peer_name);
 void ZHJPAKE_CTX_free(ZHJPAKE_CTX *ctx);
+
+/* Helper function */
 void test_hash();
+void print_bn(const char *name, const BIGNUM *bn);
 
 /* Message generation */
 ZHJPAKE_Message *ZHJPAKE_Message_new();

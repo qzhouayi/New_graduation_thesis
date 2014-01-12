@@ -1,7 +1,0 @@
-zhjpake.c: In function ‘ZHJPAKE_Message_generate’:
-zhjpake.c:95:2: warning: implicit declaration of function ‘print_bn’ [-Wimplicit-function-declaration]
-zhjpake.c: At top level:
-zhjpake.c:175:6: warning: conflicting types for ‘print_bn’ [enabled by default]
-zhjpake.c:95:2: note: previous implicit declaration of ‘print_bn’ was here
-zhjpaketest.c:24:13: warning: ‘showbn’ defined but not used [-Wunused-function]
-zhjpaketest.c:32:12: warning: ‘run_zhjpake’ defined but not used [-Wunused-function]

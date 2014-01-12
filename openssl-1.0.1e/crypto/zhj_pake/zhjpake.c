@@ -1,43 +1,40 @@
+/*
+ * ZHJPAKE implementation
+ */ 
+ 
 #include "zhjpake.h"
 
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
-#include <openssl/err.h>
+//~ #include <openssl/err.h>
 #include <memory.h>
 #include <stdio.h>
-/*
- * ZHJPAKE
- */
 
-static unsigned char zhjpake512_q[]={
-	0xBD,0x8B,0xFB,0xC4,0x41,0xF9,0x9F,0x81,0x0E,0x46,0x77,0x1D,
-	0x33,0x89,0x2A,0x48,0x9B,0xAA,0x8B,0x8C,0xD9,0xC3,0xB6,0xC0,
-	0x11,0x95,0x78,0x18,0x3C,0x50,0x9A,0xEC,0x6D,0x41,0xFF,0x17,
-	0x75,0x30,0x08,0xBD,0xCB,0x46,0xB4,0x23,0x5E,0x22,0x9A,0x73,
-	0x2B,0x3F,0x5A,0x37,0xC6,0xED,0x7A,0x72,0x60,0x74,0xCA,0x9E,
-	0x6A,0x36,0xDC,0x2B,
-	};
-static unsigned char zhjpake512_g[]={
-	0x02,
-	};
-static unsigned char zhjpake512_h[]={
-	0x04,
-	};
-	    
-struct ZHJPAKE_CTX
-	{
-	BIGNUM *g;
-	BIGNUM *h;
-	BIGNUM *q;
-	BIGNUM *secret;
-	BIGNUM *r;
-	BIGNUM *key;
-	BN_CTX *ctx;
-	BIGNUM *y;
-	BIGNUM *y_;
-	char *peer_name;
-	char *name;
-	} ;
+/*
+ * g, h and q are system parameters where q is a large prime
+ * which is precomputed with command line 
+ */	
+ 
+/* 512-bit */
+static unsigned char zhjpake_q[]={
+	0x99,0x54,0xE9,0x00,0xF1,0x5A,0x0C,0x73,0x8A,0x98,0x8A,0xEE,
+	0x15,0xBF,0x9A,0xAA,0x06,0x6C,0x9B,0x9C,0xBE,0x99,0x36,0x51,
+	0x3C,0xBA,0xC3,0x60,0x99,0xAF,0x2F,0xCC,0xBC,0xDF,0x2B,0xE8,
+	0xF1,0xF4,0x0F,0xEF,0x86,0x8B,0xF8,0x42,0xF3,0xED,0x30,0xE0,
+	0x15,0x3C,0xD0,0xB8,0xED,0x84,0x3A,0x85,0x97,0x5F,0xB8,0x5A,
+	0xB6,0x63,0x16,0xBF,0xDF,0xD3,0xEE,0x40,0xA5,0x5E,0xDA,0xCC,
+	0x9B,0x81,0xAB,0x9A,0xB4,0xBD,0x4C,0x4B,0xE3,0xE5,0xBD,0x26,
+	0x48,0x89,0x69,0xEA,0xBF,0xFC,0x89,0x54,0xCE,0xF1,0x7B,0x0E,
+	0xC7,0x04,0xF2,0xD1,0x88,0xD4,0x7B,0x32,0x99,0xED,0x52,0xE3,
+	0x8C,0x1B,0xB8,0x53,0xB5,0xE9,0x5C,0x4B,0x63,0xC1,0xBD,0x21,
+	0x90,0xBE,0xAD,0x58,0xDB,0x3E,0x60,0xCB
+};
+static unsigned char zhjpake_g[]={
+	0x02
+};
+static unsigned char zhjpake_h[]={
+	0x04
+};
 
 /* given the password(string), use SHA1 to hash it and return the result mod q */
 static void hashpassword(BIGNUM *hash_result, const char *password, BN_CTX *ctx, const BIGNUM *q)
@@ -121,12 +118,12 @@ int ZHJPAKE_Message_receive(ZHJPAKE_CTX *ctx, ZHJPAKE_Message *message)
 		return 0;
 	}
 	
-static void ZHJPAKE_CTX_init(ZHJPAKE_CTX *ctx, const BIGNUM *g, const BIGNUM *q, 
-		const BIGNUM *h, const char *password, const char *name, const char *peer_name)
+static void ZHJPAKE_CTX_init(ZHJPAKE_CTX *ctx, const char *password, const char *name, const char *peer_name)
 	{
-	ctx->g = BN_bin2bn(zhjpake512_g, sizeof(zhjpake512_g), NULL);
-	ctx->h = BN_bin2bn(zhjpake512_h, sizeof(zhjpake512_h), NULL);
-	ctx->q = BN_bin2bn(zhjpake512_q, sizeof(zhjpake512_q), NULL);
+	
+	ctx->g = BN_bin2bn(zhjpake_g, sizeof(zhjpake_g), NULL);
+	ctx->h = BN_bin2bn(zhjpake_h, sizeof(zhjpake_h), NULL);
+	ctx->q = BN_bin2bn(zhjpake_q, sizeof(zhjpake_q), NULL);
 	
 	ctx->ctx = BN_CTX_new();
 	ctx->r = BN_new();
@@ -139,7 +136,7 @@ static void ZHJPAKE_CTX_init(ZHJPAKE_CTX *ctx, const BIGNUM *g, const BIGNUM *q,
 	
 	/* hash the given string password to get a Big Number ctx->secret */
 	ctx->secret = BN_new();
-	hashpassword(ctx->secret, password, ctx->ctx, q);
+	hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
 	}
 
 static void ZHJPAKE_CTX_release(ZHJPAKE_CTX *ctx)
@@ -156,12 +153,11 @@ static void ZHJPAKE_CTX_release(ZHJPAKE_CTX *ctx)
     memset(ctx, '\0', sizeof *ctx);
     }
     
-ZHJPAKE_CTX *ZHJPAKE_CTX_new(const BIGNUM *g, const BIGNUM *q, 
-			 const BIGNUM *h, const char *secret, const char *name, const char *peer_name)
+ZHJPAKE_CTX *ZHJPAKE_CTX_new(const char *secret, const char *name, const char *peer_name)
     {
     ZHJPAKE_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
 
-    ZHJPAKE_CTX_init(ctx, g, q, h, secret, name, peer_name);
+    ZHJPAKE_CTX_init(ctx, secret, name, peer_name);
 
     return ctx;
     }    
@@ -174,7 +170,7 @@ void ZHJPAKE_CTX_free(ZHJPAKE_CTX *ctx)
 
 void print_bn(const char *name, const BIGNUM *bn)
 	{
-	printf("%s = %s\n", name, BN_bn2dec(bn));
+	printf("%s = %s\n", name, BN_bn2hex(bn));
 	}
 
 /* compute the session key*/
