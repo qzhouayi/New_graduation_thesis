@@ -20,87 +20,43 @@ int main(int argc, char *argv[])
 #include "omdhke.h"
 #include <openssl/err.h>
 
+/* helper function, print a bignum with its name */
+static void print_bn(const char *name, const BIGNUM *bn)
+	{
+	printf("%s = %s\n", name, BN_bn2hex(bn));
+	}
 
-//~ static void print_bn(const char *name, const BIGNUM *bn)
-	//~ {
-	//~ printf("%s = %s\n", name, BN_bn2hex(bn));
-	//~ }
-	//~ 
-//~ static void showbn(const char *name, const BIGNUM *bn)
-    //~ {
-    //~ fputs(name, stdout);
-    //~ fputs(" = ", stdout);
-    //~ BN_print_fp(stdout, bn);
-    //~ putc('\n', stdout);
-    //~ }
-
-static int run_omdhke(OMDHKE_CTX *alice, OMDHKE_CTX *bob)
+/* simulate the execution of OMDHKE */
+static void run_omdhke(OMDHKE_Client_CTX *client, OMDHKE_Server_CTX *server)
     {
-    OMDHKE_Message *alice_message = NULL;
-    OMDHKE_Message *bob_message = NULL;
+    OMDHKE_Client_Message *client_message = NULL;
+    OMDHKE_Server_Message *server_message = NULL;
 
-	alice_message = OMDHKE_Message_new();
-	OMDHKE_Message_generate(alice_message, alice);
-	OMDHKE_Message_receive(bob, alice_message);
-	OMDHKE_Message_free(alice_message);
+	client_message = OMDHKE_Client_Message_new();
+	OMDHKE_Client_Message_generate(client_message, client);
+	OMDHKE_Server_receive(server, client_message);
+	OMDHKE_Client_Message_free(client_message);
 	
-	bob_message = OMDHKE_Message_new();
-	OMDHKE_Message_generate(bob_message, bob);
-	OMDHKE_Message_receive(alice, bob_message);
-	OMDHKE_Message_free(bob_message);
+	server_message = OMDHKE_Server_Message_new();
+	OMDHKE_Server_Message_generate(server_message, server);
+	OMDHKE_Client_receive(client, server_message);
+	OMDHKE_Server_Message_free(server_message);
 	
-    print_bn("Alice's key", OMDHKE_get_shared_key(alice));
-    print_bn("Bob's key  ", OMDHKE_get_shared_key(bob));
-	
-    return 0;
+    print_bn("Client's key", OMDHKE_Client_get_shared_key(client));
+    print_bn("Server's key", OMDHKE_Server_get_shared_key(server));
     }
 
 int main(int argc, char **argv)
     {
-	//~ test_hash();
-	//~ BIGNUM *prime = BN_new();
-	//~ BN_generate_prime_ex(prime, 512, 1, NULL, NULL, NULL);
-	//~ BN_print_fp(stdout, prime);
-	//~ printf("\n");
-	//~ 
+    OMDHKE_Client_CTX *client;
+    OMDHKE_Server_CTX *server;
     
-    //~ BIGNUM *g = BN_new();
-    //~ BIGNUM *q = BN_new();
-    //~ BIGNUM *h = BN_new();
-    //~ BIGNUM *secret = BN_new();
-    //~ BIGNUM *temp = BN_new();
-
-	//~ unsigned char md[SHA_DIGEST_LENGTH];
-	//~ hashpassword(md, "123456");
-	
-    //~ BN_set_word(q, 19);
-    //~ BN_set_word(g, 10);
-    //~ BN_set_word(h, 13);
-	//~ BN_set_word(secret, 5);
-	//~ printf("Parameters:\n");
-	//~ print_bn("q", q);
-	//~ print_bn("g", g);
-	//~ print_bn("h", h);
-	//~ print_bn("secret", secret);
-	
-    //~ printf("alice's secret:");
-    //~ BN_print_fp(stdout, get_secret(alice));
-    //~ printf("\n");
-    
-    OMDHKE_CTX *alice;
-    OMDHKE_CTX *bob;
-    
-    printf("omdhke start! (alice's pwd is 123456 and bob's pwd is 123456\n");
-    alice = OMDHKE_CTX_new("123456", "Alice", "Bob");
-    bob = OMDHKE_CTX_new("123456", "Bob", "Alice");
-    run_omdhke(alice, bob);
+    printf("omdhke start! (client's pwd is 123456 and server's pwd is 123456\n");
+    client = OMDHKE_Client_CTX_new("123456", "Client");
+    server = OMDHKE_Server_CTX_new("123456", "Server");
+    run_omdhke(client, server);
     printf("omdhke end!\n");
-    
-    printf("omdhke start! (alice's pwd is 123456 and bob's pwd is 123457\n");
-    alice = OMDHKE_CTX_new("123456", "Alice", "Bob");
-    bob = OMDHKE_CTX_new("123457", "Bob", "Alice");
-    run_omdhke(alice, bob);
-    printf("omdhke end!\n");
+ 
     
 	return 0;
     }

@@ -1,4 +1,0 @@
-omdhke.c:18:22: warning: ‘omdhke_q’ defined but not used [-Wunused-variable]
-omdhke.c:31:22: warning: ‘omdhke_g’ defined but not used [-Wunused-variable]
-omdhke.c:309:13: warning: ‘hash0’ defined but not used [-Wunused-function]
-omdhke.c:366:13: warning: ‘hash1’ defined but not used [-Wunused-function]

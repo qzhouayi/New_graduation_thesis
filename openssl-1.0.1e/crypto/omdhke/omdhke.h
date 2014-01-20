@@ -34,10 +34,6 @@ void OMDHKE_Client_CTX_free(OMDHKE_Client_CTX *ctx);
 OMDHKE_Server_CTX *OMDHKE_Server_CTX_new(const char *secret, const char *name);
 void OMDHKE_Server_CTX_free(OMDHKE_Server_CTX *ctx);
 
-/* Helper function */
-void test_hash();
-void print_bn(const char *name, const BIGNUM *bn);
-
 /* Client Message generation */
 OMDHKE_Client_Message *OMDHKE_Client_Message_new();
 void OMDHKE_Client_Message_free(OMDHKE_Client_Message *message);

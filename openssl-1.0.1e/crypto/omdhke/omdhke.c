@@ -7,14 +7,15 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <memory.h>
+#include <string.h>
 #include <stdio.h>
 
-//~ /*
- //~ * g, h and q are system parameters where q is a large prime
- //~ * which is precomputed with command line 
- //~ */	
- //~ 
-//~ /* 512-bit */
+/*
+ * g, q are system parameters where q is a large prime
+ * which is precomputed with command line 
+ */	
+ 
+/* 512-bit */
 static unsigned char omdhke_q[]={
 	0x99,0x54,0xE9,0x00,0xF1,0x5A,0x0C,0x73,0x8A,0x98,0x8A,0xEE,
 	0x15,0xBF,0x9A,0xAA,0x06,0x6C,0x9B,0x9C,0xBE,0x99,0x36,0x51,
@@ -32,19 +33,20 @@ static unsigned char omdhke_g[]={
 	0x02
 };
 
-static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
-	const char *password, const char *name);
-static void OMDHKE_Client_CTX_release(OMDHKE_Client_CTX *ctx);
-static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
-	const char *password, const char *name);
-static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx);
+//~ static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
+	//~ const char *password, const char *name);
+//~ static void OMDHKE_Client_CTX_release(OMDHKE_Client_CTX *ctx);
+//~ static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
+	//~ const char *password, const char *name);
+//~ static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx);
+//~ 
+//~ static void OMDHKE_Client_Message_init(OMDHKE_Client_Message *message);
+//~ static void OMDHKE_Client_Message_release(OMDHKE_Client_Message *message);
+//~ 
+//~ static void hashstring512(SHA512_CTX *sha, const char *string);
+//~ static void hashbn512(SHA512_CTX *sha, const BIGNUM *bn);
+//~ static void hashlength512(SHA512_CTX *sha, size_t l);
 
-static void OMDHKE_Client_Message_init(OMDHKE_Client_Message *message);
-static void OMDHKE_Client_Message_release(OMDHKE_Client_Message *message);
-
-static void hashstring512(SHA512_CTX *sha, const char *string);
-static void hashbn512(SHA512_CTX *sha, const BIGNUM *bn);
-static void hashlength512(SHA512_CTX *sha, size_t l);
 /* 
  * The H0 hash function in the protocol description.
  * Given parameters, hash them into a 512-bit BIGNUM.
@@ -64,21 +66,19 @@ static void hash1(BIGNUM *hashresult, const char *client_name,
 				const char *server_name, const BIGNUM *X_star,
 				const BIGNUM *Y, const BIGNUM *PW, const BIGNUM *K);
 
-
-//~ // hash using
-    
-
-
 struct OMDHKE_Client_CTX
 	{
-	BN_CTX *ctx;
-	BIGNUM *q;
-	BIGNUM *g;
-	BIGNUM *PW;
-	BIGNUM *x;
+	BN_CTX *ctx; /* used for storing temporary result in library functions*/
+/* the following fields correspond to the protocol description */
+	BIGNUM *q;   
+	BIGNUM *g;   
+	BIGNUM *PW;  
+	BIGNUM *x;   
 	BIGNUM *X;
+	BIGNUM *Y;
 	BIGNUM *X_star;
 	BIGNUM *Kc;
+	BIGNUM *Auth;
 	char *client_name;
 	char *server_name;
 	BIGNUM *shared_key;
@@ -86,7 +86,8 @@ struct OMDHKE_Client_CTX
 
 struct OMDHKE_Server_CTX
 	{
-	BN_CTX *ctx;
+	BN_CTX *ctx; /* used for storing temporary result in library functions*/
+/* the following fields correspond to the protocol description */	
 	BIGNUM *q;
 	BIGNUM *g;
 	BIGNUM *PW;
@@ -114,165 +115,26 @@ struct OMDHKE_Server_Message
 	BIGNUM *Auth;
 	};
 		
-//~ static unsigned char omdhke_h[]={
-	//~ 0x04
-//~ };
-//~ 
-//~ /* given the password(string), use SHA1 to hash it and return the result mod q */
-//~ static void hashpassword(BIGNUM *hash_result, const char *password, BN_CTX *ctx, const BIGNUM *q)
-	//~ {
-	//~ SHA_CTX sha;
-	//~ size_t length = strlen(password);
-	//~ BIGNUM *hash_bn = BN_new();
-	//~ unsigned char digest[SHA_DIGEST_LENGTH];
-	//~ 
-	//~ SHA1_Init(&sha);
-    //~ SHA1_Update(&sha, password, length);
-    //~ SHA1_Final(digest, &sha);
-    //~ BN_bin2bn(digest, SHA_DIGEST_LENGTH, hash_bn);
-    //~ 
-	//~ BN_mod(hash_result, hash_bn, q, ctx);
-	//~ }
-	//~ 
-//~ static void OMDHKE_Message_init(OMDHKE_Message *message)
-	//~ {
-	//~ message->y = BN_new();
-	//~ }
-	//~ 
-//~ static void OMDHKE_Message_release(OMDHKE_Message *message)
-	//~ {
-	//~ BN_free(message->y);
-	//~ }
-	//~ 
-//~ void OMDHKE_Message_generate(OMDHKE_Message *message, OMDHKE_CTX *ctx)
-	//~ {
-	//~ BIGNUM *t1 = BN_new();
-	//~ BIGNUM *t2 = BN_new();
-	//~ 
-	//~ /* just for debugging */
-	//~ static int cnt = 0;
-	//~ cnt++;
-	//~ 
-	//~ /* r belongs to [0, q) */
-	//~ BN_rand_range(ctx->r, ctx->q);
-	//~ 
-	//~ /* t1 = g^r mod q */
-	//~ BN_mod_exp(t1, ctx->g, ctx->r, ctx->q, ctx->ctx);
-		//~ 
-	//~ /* t2 = h^secret mod q */
-	//~ BN_mod_exp(t2, ctx->h, ctx->secret, ctx->q, ctx->ctx);
-		//~ 
-	//~ /* ctx->y = t1 * t2 mod q */
-	//~ BN_mod_mul(ctx->y, t1, t2, ctx->q, ctx->ctx);
-		//~ 
-	//~ /* message->y = ctx->y */
-	//~ message->y = BN_dup(ctx->y);
-	//~ 
-	//~ /* print the random number r generated (just for debugging) */
-	//~ if (cnt == 1)
-	//~ {
-	//~ print_bn("alice's r", ctx->r);
-	//~ }
-	//~ else
-	//~ {
-	//~ print_bn("bob's r", ctx->r);
-	//~ }
-	//~ }
-//~ 
-//~ OMDHKE_Message *OMDHKE_Message_new()
-	//~ {
-	//~ OMDHKE_Message *message = OPENSSL_malloc(sizeof *message);
-//~ 
-    //~ OMDHKE_Message_init(message);
-//~ 
-    //~ return message;
-	//~ }
-//~ 
-//~ void OMDHKE_Message_free(OMDHKE_Message *message)
-	//~ {
-	//~ OMDHKE_Message_release(message);
-    //~ OPENSSL_free(message);
-	//~ }
-	    //~ 
-//~ int OMDHKE_Message_receive(OMDHKE_CTX *ctx, OMDHKE_Message *message)
-	//~ {
-		//~ ctx->y_ = BN_dup(message->y);
-		//~ return 0;
-	//~ }
-	//~ 
-
-//~ 
-//~ static void OMDHKE_CTX_release(OMDHKE_CTX *ctx)
-    //~ {
+/* 
+ * Given the weak password(string), return a big number as the hash result
+ * Hash method: use SHA to hash the password and then mod q
+ */
+static void hashpassword(BIGNUM *hash_result, const char *password, BN_CTX *ctx, const BIGNUM *q)
+	{
+	SHA_CTX sha;
+	size_t length = strlen(password);
+	BIGNUM *hash_bn = BN_new();
+	unsigned char digest[SHA_DIGEST_LENGTH];
 	
-    //~ }
-    //~ 
-   //~ 
+	SHA1_Init(&sha);
+    SHA1_Update(&sha, password, length);
+    SHA1_Final(digest, &sha);
+    BN_bin2bn(digest, SHA_DIGEST_LENGTH, hash_bn);
+    
+	BN_mod(hash_result, hash_bn, q, ctx);
+	}
 
-//~ 
-//~ void print_bn(const char *name, const BIGNUM *bn)
-	//~ {
-	//~ printf("%s = %s\n", name, BN_bn2hex(bn));
-	//~ }
-//~ 
-//~ /* compute the session key*/
-//~ /* key = (y_ * (h^(-1))^secret) ^ r */
-//~ void OMDHKE_compute_key(OMDHKE_CTX *ctx)
-	//~ {
-	//~ BIGNUM *t1 = BN_new();
-	//~ BIGNUM *t2 = BN_new();
-	//~ BIGNUM *inv_h = BN_new();
-	//~ 
-	//~ /* inv_h = h ^ (-1) */
-	//~ BN_mod_inverse(inv_h, ctx->h, ctx->q, ctx->ctx);
-	//~ 
-	//~ /* t1 = inv_h ^ secret */
-	//~ BN_mod_exp(t1, inv_h, ctx->secret, ctx->q, ctx->ctx);
-	//~ 
-	//~ /* t2 = y_ * t1 */
-	//~ BN_mod_mul(t2, ctx->y_, t1, ctx->q, ctx->ctx);
-	//~ 
-	//~ /* key = t2 ^ r */
-	//~ ctx->key = BN_new();
-	//~ BN_mod_exp(ctx->key, t2, ctx->r, ctx->q, ctx->ctx);
-	//~ }
-//~ 
-//~ const BIGNUM *OMDHKE_get_shared_key(OMDHKE_CTX *ctx)
-	//~ {
-	//~ if (ctx->key == NULL)
-	//~ {
-		//~ OMDHKE_compute_key(ctx);
-	//~ }
-	//~ return ctx->key;
-	//~ }
-	//~ 
-//~ /* test the function of hashpassword */
-//~ void test_hash()
-//~ {
-	//~ const char *pwd1 = "123456";
-	//~ const char *pwd2 = "123457";
-	//~ BIGNUM *secret = BN_new();
-	//~ BN_CTX *ctx = BN_CTX_new();
-	//~ BIGNUM *q = BN_new();
-	//~ BN_set_word(q, 0xFFFFFF);
-	//~ 
-	//~ printf("test hash start!\n");
-	//~ 
-	//~ hashpassword(secret, pwd1, ctx, q);
-	//~ BN_print_fp(stdout, secret);
-	//~ printf("\n");
-	//~ 
-	//~ hashpassword(secret, pwd2, ctx, q);
-	//~ BN_print_fp(stdout, secret);
-	//~ printf("\n");
-	//~ 
-	//~ printf("test hash end!\n");
-//~ }
-
-int main() { return 0; }
-
-
-
+/* add a string into the SHA context(512 bits)  */
 static void hashstring512(SHA512_CTX *sha, const char *string)
     {
     size_t l = strlen(string);
@@ -281,6 +143,7 @@ static void hashstring512(SHA512_CTX *sha, const char *string)
     SHA512_Update(sha, string, l);
     }
 
+/* add a big number into the SHA context(512 bits) */
 static void hashbn512(SHA512_CTX *sha, const BIGNUM *bn)
     {
     size_t l = BN_num_bytes(bn);
@@ -292,6 +155,7 @@ static void hashbn512(SHA512_CTX *sha, const BIGNUM *bn)
     OPENSSL_free(bin);
     }
 
+/* add the length l into the SHA context(512 bits) */
 static void hashlength512(SHA512_CTX *sha, size_t l)
     {
     unsigned char b[2];
@@ -322,14 +186,8 @@ static void hash0(BIGNUM *hashresult, const char *client_name,
     SHA512_Final(md, &sha);
     BN_bin2bn(md, SHA512_DIGEST_LENGTH, hashresult);
 	}
-	
 
-
-
-
-
-
-
+/* add a string into the SHA context(256 bits)  */	
 static void hashstring256(SHA256_CTX *sha, const char *string)
     {
     size_t l = strlen(string);
@@ -338,6 +196,7 @@ static void hashstring256(SHA256_CTX *sha, const char *string)
     SHA256_Update(sha, string, l);
     }
 
+/* add a big number into the SHA context(256 bits) */
 static void hashbn256(SHA256_CTX *sha, const BIGNUM *bn)
     {
     size_t l = BN_num_bytes(bn);
@@ -349,6 +208,7 @@ static void hashbn256(SHA256_CTX *sha, const BIGNUM *bn)
     OPENSSL_free(bin);
     }
 
+/* add the length l into the SHA context(256 bits) */
 static void hashlength256(SHA256_CTX *sha, size_t l)
     {
     unsigned char b[2];
@@ -380,71 +240,32 @@ static void hash1(BIGNUM *hashresult, const char *client_name,
     BN_bin2bn(md, SHA256_DIGEST_LENGTH, hashresult);
 	}
 
-
-
-
-
-
-
-
-
-
-//~ struct OMDHKE_Client_CTX
-	//~ {
-	//~ BIGNUM *x;
-	//~ BIGNUM *X;
-	//~ BIGNUM *X_star;
-	//~ BIGNUM *Kc;
-	//~ char *client_name;
-	//~ BIGNUM *shared_key;
-	//~ };
-
 static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
 	const char *password, const char *name)
 	{
-	ctx->x = BN_new();
+	ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
+	ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
 	ctx->X = BN_new();
 	ctx->X_star = BN_new();
 	ctx->Kc = BN_new();
-	ctx->client_name = NULL;
-	ctx->shared_key = BN_new();	
-	//~ ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
-	//~ ctx->h = BN_bin2bn(omdhke_h, sizeof(omdhke_h), NULL);
-	//~ ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
-	//~ 
-	//~ ctx->ctx = BN_CTX_new();
-	//~ ctx->r = BN_new();
-	//~ ctx->y = BN_new();
-	//~ ctx->key = NULL;
-	//~ ctx->y_ = NULL;
-	//~ 
-	//~ ctx->name = OPENSSL_strdup(name);
-	//~ ctx->peer_name = OPENSSL_strdup(peer_name);
-	//~ 
-	//~ /* hash the given string password to get a Big Number ctx->secret */
-	//~ ctx->secret = BN_new();
-	//~ hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
+	ctx->client_name = OPENSSL_strdup(name);
+	ctx->shared_key = NULL;	
+	
+	/* hash the given string password to get a Big Number ctx->PW */
+	ctx->PW = BN_new();
+	hashpassword(ctx->PW, password, ctx->ctx, ctx->q);
 	}
 
 static void OMDHKE_Client_CTX_release(OMDHKE_Client_CTX *ctx)
 	{
-	//to be filled
 	BN_clear_free(ctx->x);
 	BN_clear_free(ctx->X);
 	BN_clear_free(ctx->X_star);
 	BN_clear_free(ctx->Kc);
 	OPENSSL_free(ctx->client_name);
 	BN_clear_free(ctx->shared_key);
-	//~ BN_clear_free(ctx->g);
-	//~ BN_clear_free(ctx->h);
-	//~ BN_clear_free(ctx->q);
-	//~ BN_clear_free(ctx->secret);
-	//~ BN_clear_free(ctx->r);
-	//~ BN_clear_free(ctx->y);
-	//~ BN_clear_free(ctx->y_);
-	//~ BN_clear_free(ctx->key);
-	//~ 
-    //~ memset(ctx, '\0', sizeof *ctx);
+	
+	memset(ctx, '\0', sizeof *ctx);
 	}
 
 OMDHKE_Client_CTX *OMDHKE_Client_CTX_new(const char *secret, const char *name)
@@ -462,42 +283,11 @@ void OMDHKE_Client_CTX_free(OMDHKE_Client_CTX *ctx)
     OPENSSL_free(ctx);
 	}
 
-
-
-//~ struct OMDHKE_Server_CTX
-	//~ {
-	//~ // to be filled 
-	//~ char *client_name;
-	//~ char *server_name;
-	//~ BIGNUM *X;
-	//~ BIGNUM *Y;
-	//~ BIGNUM *y;
-	//~ BIGNUM *X_star;
-	//~ BIGNUM *Ks;
-	//~ BIGNUM *Auth;
-	//~ BIGNUM *shared_key;
-	//~ };
-	
 static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
 	const char *password, const char *name)
 	{
-		//to be filled
-	//~ ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
-	//~ ctx->h = BN_bin2bn(omdhke_h, sizeof(omdhke_h), NULL);
-	//~ ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
-	//~ 
-	//~ ctx->ctx = BN_CTX_new();
-	//~ ctx->r = BN_new();
-	//~ ctx->y = BN_new();
-	//~ ctx->key = NULL;
-	//~ ctx->y_ = NULL;
-	//~ 
-	//~ ctx->name = OPENSSL_strdup(name);
-	//~ ctx->peer_name = OPENSSL_strdup(peer_name);
-	//~ 
-	//~ /* hash the given string password to get a Big Number ctx->secret */
-	//~ ctx->secret = BN_new();
-	//~ hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
+	ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
+	ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
 	ctx->server_name = OPENSSL_strdup(name);
 	ctx->client_name = NULL;
 	ctx->X = BN_new();
@@ -506,12 +296,15 @@ static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
 	ctx->X_star = BN_new();
 	ctx->Ks = BN_new();
 	ctx->Auth = BN_new();
-	ctx->shared_key = BN_new();
+	ctx->shared_key = NULL;
+	
+	/* hash the given string password to get a Big Number ctx->PW */
+	ctx->PW = BN_new();
+	hashpassword(ctx->PW, password, ctx->ctx, ctx->q);
 	}
 
 static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx)
 	{
-	//to be filled
 	OPENSSL_free(ctx->server_name);
 	OPENSSL_free(ctx->client_name);
 	BN_clear_free(ctx->X);
@@ -521,16 +314,8 @@ static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx)
 	BN_clear_free(ctx->Ks);
 	BN_clear_free(ctx->Auth);
 	BN_clear_free(ctx->shared_key);
-	//~ BN_clear_free(ctx->g);
-	//~ BN_clear_free(ctx->h);
-	//~ BN_clear_free(ctx->q);
-	//~ BN_clear_free(ctx->secret);
-	//~ BN_clear_free(ctx->r);
-	//~ BN_clear_free(ctx->y);
-	//~ BN_clear_free(ctx->y_);
-	//~ BN_clear_free(ctx->key);
-	//~ 
-    //~ memset(ctx, '\0', sizeof *ctx);
+	
+    memset(ctx, '\0', sizeof *ctx);
 	}
 
 OMDHKE_Server_CTX *OMDHKE_Server_CTX_new(const char *secret, const char *name)
@@ -547,7 +332,6 @@ void OMDHKE_Server_CTX_free(OMDHKE_Server_CTX *ctx)
     OMDHKE_Server_CTX_release(ctx);
     OPENSSL_free(ctx);
 	}
-
 	
 static void OMDHKE_Client_Message_init(OMDHKE_Client_Message *message)
 	{
@@ -576,15 +360,6 @@ void OMDHKE_Client_Message_free(OMDHKE_Client_Message *message)
     OPENSSL_free(message);
 	}
 
-
-
-//~ struct OMDHKE_Server_Message
-	//~ {
-	//~ char *server_name;
-	//~ BIGNUM *Y;
-	//~ BIGNUM *Auth;
-	//~ };
-	
 static void OMDHKE_Server_Message_init(OMDHKE_Server_Message *message)
 	{
 	message->server_name = NULL;
@@ -617,53 +392,79 @@ void OMDHKE_Server_Message_free(OMDHKE_Server_Message *message)
 void OMDHKE_Server_Message_generate(OMDHKE_Server_Message *message, OMDHKE_Server_CTX *ctx)
 	{
 	// ctx->X = ctx->X_star / PW;
+	/* y belongs to [0, q) */
 	BN_rand_range(ctx->y, ctx->q);
+	/* Y = g^y */
 	BN_mod_exp(ctx->Y, ctx->g, ctx->y, ctx->q, ctx->ctx);
+	/* Ks = X^y */
 	BN_mod_exp(ctx->Ks, ctx->X, ctx->y, ctx->q, ctx->ctx);
-	// ctx->Auth = Hash1(C, S, X_star, Y, PW, Ks);
+	/* Auth = H1(client_name, server_name, X_star, Y, PW, Ks) */
+	hash1(message->Auth, ctx->client_name, ctx->server_name, ctx->X_star, ctx->Y, ctx->PW, ctx->Ks);
 	
-	
-	
-	//~ unsigned char md[SHA_DIGEST_LENGTH];
-    //~ SHA_CTX sha;
-    //~ SHA1_Init(&sha);
-    //~ hashstring(&sha, ctx->client_name);
-    //~ hashstring(&sha, ctx->server_name);
-    //~ hashbn(&sha, ctx->X_star);
-    //~ hashbn(&sha, ctx->Y);
-    //~ hashbn(&sha, ctx->PW);
-    //~ hashbn(&sha, ctx->Ks);
-    //~ SHA1_Final(md, &sha);
-    //~ BN_bin2bn(md, SHA_DIGEST_LENGTH, message->Auth);
-    
-    //~ hashbn(&sha, ctx->client_name);
-    //~ hashbn(&sha, p->zkpx.gr);
-    //~ hashbn(&sha, p->gx);
-    //~ hashstring(&sha, proof_name);
-    //~ SHA1_Final(md, &sha);
-    //~ BN_bin2bn(md, SHA_DIGEST_LENGTH, h);
-    
+	message->server_name = OPENSSL_strdup(ctx->server_name);
+	message->Y = BN_dup(ctx->Y);
 	}
-
-	
-//~ OMDHKE_Client_Message *OMDHKE_Client_Message_new(OMDHKE_Client_CTX *ctx)
-	//~ {
-	//~ BN_rand_range(ctx->x, ctx->q);
-	//~ BN_mod_exp(ctx->X, ctx->g, ctx->x, ctx->q, ctx->ctx);
-	//~ 
-	//~ /* Xstar = X * PW */
-	//~ BN_mod_mul(ctx->X_star, ctx->X, ctx->PW, ctx->q, ctx->ctx);
-	//~ 
-	//~ 
-	//~ 
-	//~ return NULL;
-	//~ }
 
 void OMDHKE_Client_Message_generate(OMDHKE_Client_Message *message, OMDHKE_Client_CTX *ctx)
 	{
+	/* x belongs to [0, q) */
 	BN_rand_range(ctx->x, ctx->q);
+	/* X = g^x */
 	BN_mod_exp(ctx->X, ctx->g, ctx->x, ctx->q, ctx->ctx);
+	/* X_star = X * PW */
 	BN_mod_mul(ctx->X_star, ctx->X, ctx->PW, ctx->q, ctx->ctx);
+	
 	message->client_name = OPENSSL_strdup(ctx->client_name);
 	message->X_star = BN_dup(ctx->X_star);
+	}
+
+int OMDHKE_Server_receive(OMDHKE_Server_CTX *ctx, OMDHKE_Client_Message *message)
+	{
+	ctx->client_name = OPENSSL_strdup(message->client_name);
+	ctx->X_star = BN_dup(message->X_star);
+	return 1;
+	}
+
+/* check if the Auth field of client context is valid */	
+static int isvalid(OMDHKE_Client_CTX *ctx)
+	{
+	BIGNUM *hashresult = BN_new();
+	hash1(hashresult, ctx->client_name, ctx->server_name, ctx->X_star, ctx->Y, ctx->PW, ctx->Kc);
+	return BN_cmp(ctx->Auth, hashresult) == 0;
+	}
+	
+int OMDHKE_Client_receive(OMDHKE_Client_CTX *ctx, OMDHKE_Server_Message *message)
+	{
+	ctx->server_name = OPENSSL_strdup(message->server_name);
+	ctx->Y = BN_dup(message->Y);
+	ctx->Auth = BN_dup(message->Auth);
+	return isvalid(ctx);
+	}
+
+static void OMDHKE_Client_compute_key(OMDHKE_Client_CTX *ctx)
+	{
+	hash0(ctx->shared_key, ctx->client_name, ctx->server_name, ctx->X_star, ctx->Y, ctx->PW, ctx->Kc);
+	}
+	
+const BIGNUM *OMDHKE_Client_get_shared_key(OMDHKE_Client_CTX *ctx)
+	{
+	if (ctx->shared_key == NULL)
+		{
+		OMDHKE_Client_compute_key(ctx);
+		}
+	return ctx->shared_key;
+	}
+
+static void OMDHKE_Server_compute_key(OMDHKE_Server_CTX *ctx)
+	{
+	hash0(ctx->shared_key, ctx->client_name, ctx->server_name, ctx->X_star, ctx->Y, ctx->PW, ctx->Ks);
+	}
+
+const BIGNUM *OMDHKE_Server_get_shared_key(OMDHKE_Server_CTX *ctx)
+	{
+	if (ctx->shared_key == NULL)
+		{
+		OMDHKE_Server_compute_key(ctx);
+		}
+	return ctx->shared_key;	
 	}
