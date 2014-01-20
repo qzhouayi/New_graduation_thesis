@@ -22,24 +22,6 @@ extern "C" {
 typedef struct OMDHKE_Client_CTX OMDHKE_Client_CTX;
 typedef struct OMDHKE_Server_CTX OMDHKE_Server_CTX;
 
-//~ typedef struct 
-	//~ {
-	//~ BIGNUM *y;
-	//~ } OMDHKE_Message;
-
-struct OMDHKE_Client_Message
-	{
-	char *client_name;
-	BIGNUM *X_star;
-	};
-
-struct OMDHKE_Server_Message
-	{
-	char *server_name;
-	BIGNUM *Y;
-	BIGNUM *Auth;
-	};
-
 /* Data structure of the Messages during protocol execution */
 typedef struct OMDHKE_Client_Message OMDHKE_Client_Message;
 typedef struct OMDHKE_Server_Message OMDHKE_Server_Message;
