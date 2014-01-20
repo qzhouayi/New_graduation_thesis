@@ -15,22 +15,53 @@
  //~ */	
  //~ 
 //~ /* 512-bit */
-//~ static unsigned char omdhke_q[]={
-	//~ 0x99,0x54,0xE9,0x00,0xF1,0x5A,0x0C,0x73,0x8A,0x98,0x8A,0xEE,
-	//~ 0x15,0xBF,0x9A,0xAA,0x06,0x6C,0x9B,0x9C,0xBE,0x99,0x36,0x51,
-	//~ 0x3C,0xBA,0xC3,0x60,0x99,0xAF,0x2F,0xCC,0xBC,0xDF,0x2B,0xE8,
-	//~ 0xF1,0xF4,0x0F,0xEF,0x86,0x8B,0xF8,0x42,0xF3,0xED,0x30,0xE0,
-	//~ 0x15,0x3C,0xD0,0xB8,0xED,0x84,0x3A,0x85,0x97,0x5F,0xB8,0x5A,
-	//~ 0xB6,0x63,0x16,0xBF,0xDF,0xD3,0xEE,0x40,0xA5,0x5E,0xDA,0xCC,
-	//~ 0x9B,0x81,0xAB,0x9A,0xB4,0xBD,0x4C,0x4B,0xE3,0xE5,0xBD,0x26,
-	//~ 0x48,0x89,0x69,0xEA,0xBF,0xFC,0x89,0x54,0xCE,0xF1,0x7B,0x0E,
-	//~ 0xC7,0x04,0xF2,0xD1,0x88,0xD4,0x7B,0x32,0x99,0xED,0x52,0xE3,
-	//~ 0x8C,0x1B,0xB8,0x53,0xB5,0xE9,0x5C,0x4B,0x63,0xC1,0xBD,0x21,
-	//~ 0x90,0xBE,0xAD,0x58,0xDB,0x3E,0x60,0xCB
-//~ };
-//~ static unsigned char omdhke_g[]={
-	//~ 0x02
-//~ };
+static unsigned char omdhke_q[]={
+	0x99,0x54,0xE9,0x00,0xF1,0x5A,0x0C,0x73,0x8A,0x98,0x8A,0xEE,
+	0x15,0xBF,0x9A,0xAA,0x06,0x6C,0x9B,0x9C,0xBE,0x99,0x36,0x51,
+	0x3C,0xBA,0xC3,0x60,0x99,0xAF,0x2F,0xCC,0xBC,0xDF,0x2B,0xE8,
+	0xF1,0xF4,0x0F,0xEF,0x86,0x8B,0xF8,0x42,0xF3,0xED,0x30,0xE0,
+	0x15,0x3C,0xD0,0xB8,0xED,0x84,0x3A,0x85,0x97,0x5F,0xB8,0x5A,
+	0xB6,0x63,0x16,0xBF,0xDF,0xD3,0xEE,0x40,0xA5,0x5E,0xDA,0xCC,
+	0x9B,0x81,0xAB,0x9A,0xB4,0xBD,0x4C,0x4B,0xE3,0xE5,0xBD,0x26,
+	0x48,0x89,0x69,0xEA,0xBF,0xFC,0x89,0x54,0xCE,0xF1,0x7B,0x0E,
+	0xC7,0x04,0xF2,0xD1,0x88,0xD4,0x7B,0x32,0x99,0xED,0x52,0xE3,
+	0x8C,0x1B,0xB8,0x53,0xB5,0xE9,0x5C,0x4B,0x63,0xC1,0xBD,0x21,
+	0x90,0xBE,0xAD,0x58,0xDB,0x3E,0x60,0xCB
+};
+static unsigned char omdhke_g[]={
+	0x02
+};
+
+static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
+	const char *password, const char *name);
+static void OMDHKE_Client_CTX_release(OMDHKE_Client_CTX *ctx);
+static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
+	const char *password, const char *name);
+static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx);
+
+struct OMDHKE_Client_CTX
+	{
+	BIGNUM *x;
+	BIGNUM *X;
+	BIGNUM *X_star;
+	BIGNUM *Kc;
+	char *client_name;
+	BIGNUM *shared_key;
+	};
+
+struct OMDHKE_Server_CTX
+	{
+	char *client_name;
+	char *server_name;
+	BIGNUM *X;
+	BIGNUM *Y;
+	BIGNUM *y;
+	BIGNUM *X_star;
+	BIGNUM *Ks;
+	BIGNUM *Auth;
+	BIGNUM *shared_key;
+	};
+		
 //~ static unsigned char omdhke_h[]={
 	//~ 0x04
 //~ };
@@ -117,55 +148,15 @@
 		//~ return 0;
 	//~ }
 	//~ 
-//~ static void OMDHKE_CTX_init(OMDHKE_CTX *ctx, const char *password, const char *name, const char *peer_name)
-	//~ {
-	//~ 
-	//~ ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
-	//~ ctx->h = BN_bin2bn(omdhke_h, sizeof(omdhke_h), NULL);
-	//~ ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
-	//~ 
-	//~ ctx->ctx = BN_CTX_new();
-	//~ ctx->r = BN_new();
-	//~ ctx->y = BN_new();
-	//~ ctx->key = NULL;
-	//~ ctx->y_ = NULL;
-	//~ 
-	//~ ctx->name = OPENSSL_strdup(name);
-	//~ ctx->peer_name = OPENSSL_strdup(peer_name);
-	//~ 
-	//~ /* hash the given string password to get a Big Number ctx->secret */
-	//~ ctx->secret = BN_new();
-	//~ hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
-	//~ }
+
 //~ 
 //~ static void OMDHKE_CTX_release(OMDHKE_CTX *ctx)
     //~ {
-	//~ BN_clear_free(ctx->g);
-	//~ BN_clear_free(ctx->h);
-	//~ BN_clear_free(ctx->q);
-	//~ BN_clear_free(ctx->secret);
-	//~ BN_clear_free(ctx->r);
-	//~ BN_clear_free(ctx->y);
-	//~ BN_clear_free(ctx->y_);
-	//~ BN_clear_free(ctx->key);
-	//~ 
-    //~ memset(ctx, '\0', sizeof *ctx);
+	
     //~ }
     //~ 
-//~ OMDHKE_CTX *OMDHKE_CTX_new(const char *secret, const char *name, const char *peer_name)
-    //~ {
-    //~ OMDHKE_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
-//~ 
-    //~ OMDHKE_CTX_init(ctx, secret, name, peer_name);
-//~ 
-    //~ return ctx;
-    //~ }    
    //~ 
-//~ void OMDHKE_CTX_free(OMDHKE_CTX *ctx)
-    //~ {
-    //~ OMDHKE_CTX_release(ctx);
-    //~ OPENSSL_free(ctx);
-    //~ }
+
 //~ 
 //~ void print_bn(const char *name, const BIGNUM *bn)
 	//~ {
@@ -226,3 +217,156 @@
 	//~ printf("test hash end!\n");
 //~ }
 
+int main() { return 0; }
+
+OMDHKE_Client_CTX *OMDHKE_Client_CTX_new(const char *secret, const char *name)
+	{
+	OMDHKE_Client_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
+
+    OMDHKE_Client_CTX_init(ctx, secret, name);
+
+    return ctx;
+	}
+
+//~ struct OMDHKE_Client_CTX
+	//~ {
+	//~ BIGNUM *x;
+	//~ BIGNUM *X;
+	//~ BIGNUM *X_star;
+	//~ BIGNUM *Kc;
+	//~ char *client_name;
+	//~ BIGNUM *shared_key;
+	//~ };
+
+static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
+	const char *password, const char *name)
+	{
+	//to be filled
+	ctx->x = BN_new();
+	ctx->X = BN_new();
+	ctx->X_star = BN_new();
+	ctx->Kc = BN_new();
+	ctx->client_name = NULL;
+	ctx->shared_key = BN_new();	
+	//~ ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
+	//~ ctx->h = BN_bin2bn(omdhke_h, sizeof(omdhke_h), NULL);
+	//~ ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
+	//~ 
+	//~ ctx->ctx = BN_CTX_new();
+	//~ ctx->r = BN_new();
+	//~ ctx->y = BN_new();
+	//~ ctx->key = NULL;
+	//~ ctx->y_ = NULL;
+	//~ 
+	//~ ctx->name = OPENSSL_strdup(name);
+	//~ ctx->peer_name = OPENSSL_strdup(peer_name);
+	//~ 
+	//~ /* hash the given string password to get a Big Number ctx->secret */
+	//~ ctx->secret = BN_new();
+	//~ hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
+	}
+
+static void OMDHKE_Client_CTX_release(OMDHKE_Client_CTX *ctx)
+	{
+	//to be filled
+	BN_clear_free(ctx->x);
+	BN_clear_free(ctx->X);
+	BN_clear_free(ctx->X_star);
+	BN_clear_free(ctx->Kc);
+	OPENSSL_free(ctx->client_name);
+	BN_clear_free(ctx->shared_key);
+	//~ BN_clear_free(ctx->g);
+	//~ BN_clear_free(ctx->h);
+	//~ BN_clear_free(ctx->q);
+	//~ BN_clear_free(ctx->secret);
+	//~ BN_clear_free(ctx->r);
+	//~ BN_clear_free(ctx->y);
+	//~ BN_clear_free(ctx->y_);
+	//~ BN_clear_free(ctx->key);
+	//~ 
+    //~ memset(ctx, '\0', sizeof *ctx);
+	}
+
+void OMDHKE_Client_CTX_free(OMDHKE_Client_CTX *ctx)
+	{
+    OMDHKE_Client_CTX_release(ctx);
+    OPENSSL_free(ctx);
+	}
+
+OMDHKE_Server_CTX *OMDHKE_Server_CTX_new(const char *secret, const char *name)
+	{
+	OMDHKE_Server_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
+
+    OMDHKE_Server_CTX_init(ctx, secret, name);
+
+    return ctx;
+	}
+
+//~ struct OMDHKE_Server_CTX
+	//~ {
+	//~ // to be filled 
+	//~ char *client_name;
+	//~ char *server_name;
+	//~ BIGNUM *X;
+	//~ BIGNUM *Y;
+	//~ BIGNUM *y;
+	//~ BIGNUM *X_star;
+	//~ BIGNUM *Ks;
+	//~ BIGNUM *Auth;
+	//~ BIGNUM *shared_key;
+	//~ };
+	
+static void OMDHKE_Server_CTX_init(OMDHKE_Server_CTX *ctx,
+	const char *password, const char *name)
+	{
+		//to be filled
+	//~ ctx->g = BN_bin2bn(omdhke_g, sizeof(omdhke_g), NULL);
+	//~ ctx->h = BN_bin2bn(omdhke_h, sizeof(omdhke_h), NULL);
+	//~ ctx->q = BN_bin2bn(omdhke_q, sizeof(omdhke_q), NULL);
+	//~ 
+	//~ ctx->ctx = BN_CTX_new();
+	//~ ctx->r = BN_new();
+	//~ ctx->y = BN_new();
+	//~ ctx->key = NULL;
+	//~ ctx->y_ = NULL;
+	//~ 
+	//~ ctx->name = OPENSSL_strdup(name);
+	//~ ctx->peer_name = OPENSSL_strdup(peer_name);
+	//~ 
+	//~ /* hash the given string password to get a Big Number ctx->secret */
+	//~ ctx->secret = BN_new();
+	//~ hashpassword(ctx->secret, password, ctx->ctx, ctx->q);
+	ctx->server_name = OPENSSL_strdup(name);
+	ctx->client_name = NULL;
+	ctx->X = BN_new();
+	ctx->Y = BN_new();
+	ctx->y = BN_new();
+	ctx->X_star = BN_new();
+	ctx->Ks = BN_new();
+	ctx->Auth = BN_new();
+	ctx->shared_key = BN_new();
+	}
+
+static void OMDHKE_Server_CTX_release(OMDHKE_Server_CTX *ctx)
+	{
+	//to be filled
+	OPENSSL_free(ctx->server_name);
+	OPENSSL_free(ctx->client_name);
+	BN_clear_free(ctx->X);
+	BN_clear_free(ctx->Y);
+	BN_clear_free(ctx->y);
+	BN_clear_free(ctx->X_star);
+	BN_clear_free(ctx->Ks);
+	BN_clear_free(ctx->Auth);
+	BN_clear_free(ctx->shared_key);
+	//~ BN_clear_free(ctx->g);
+	//~ BN_clear_free(ctx->h);
+	//~ BN_clear_free(ctx->q);
+	//~ BN_clear_free(ctx->secret);
+	//~ BN_clear_free(ctx->r);
+	//~ BN_clear_free(ctx->y);
+	//~ BN_clear_free(ctx->y_);
+	//~ BN_clear_free(ctx->key);
+	//~ 
+    //~ memset(ctx, '\0', sizeof *ctx);
+	}

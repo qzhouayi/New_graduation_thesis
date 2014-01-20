@@ -1,0 +1,3 @@
+omdhke.c:18:22: warning: ‘omdhke_q’ defined but not used [-Wunused-variable]
+omdhke.c:31:22: warning: ‘omdhke_g’ defined but not used [-Wunused-variable]
+omdhke.c:281:13: warning: ‘OMDHKE_Server_CTX_release’ defined but not used [-Wunused-function]

@@ -18,22 +18,6 @@ extern "C" {
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 
-//~ typedef struct 
-	//~ {
-	//~ BIGNUM *g;
-	//~ BIGNUM *h;
-	//~ BIGNUM *q;
-	//~ BIGNUM *secret;
-	//~ BIGNUM *r;
-	//~ BIGNUM *key;
-	//~ BN_CTX *ctx;
-	//~ BIGNUM *y;
-	//~ BIGNUM *y_;
-	//~ char *peer_name;
-	//~ char *name;
-	//~ } OMDHKE_CTX;
-
-
 /* Data structure of the protocol context */
 typedef struct OMDHKE_Client_CTX OMDHKE_Client_CTX;
 typedef struct OMDHKE_Server_CTX OMDHKE_Server_CTX;
@@ -65,7 +49,7 @@ OMDHKE_Client_CTX *OMDHKE_Client_CTX_new(const char *secret, const char *name);
 void OMDHKE_Client_CTX_free(OMDHKE_Client_CTX *ctx);
 
 /* Alloc and release OMDHKE_Server_CTX */	
-OMDHKE_Client_CTX *OMDHKE_Server_CTX_new(const char *secret, const char *name);
+OMDHKE_Server_CTX *OMDHKE_Server_CTX_new(const char *secret, const char *name);
 void OMDHKE_Server_CTX_free(OMDHKE_Server_CTX *ctx);
 
 /* Helper function */
