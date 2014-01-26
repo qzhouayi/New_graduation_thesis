@@ -95,17 +95,26 @@ int main(int argc, char **argv)
     char alice_pwd[MAX_PWD_LENGTH];
     char bob_pwd[MAX_PWD_LENGTH];
     
-    printf("input the password of Alice:\n");
-    fgets(alice_pwd, sizeof(alice_pwd), stdin);
-    alice_pwd[strlen(alice_pwd)-1] = '\0';
-    printf("input the password of Bob:\n");
-    fgets(bob_pwd, sizeof(bob_pwd), stdin);
-    bob_pwd[strlen(bob_pwd)-1] = '\0';
+    //~ printf("input the password of Alice:\n");
+    //~ fgets(alice_pwd, sizeof(alice_pwd), stdin);
+    //~ alice_pwd[strlen(alice_pwd)-1] = '\0';
+    //~ printf("input the password of Bob:\n");
+    //~ fgets(bob_pwd, sizeof(bob_pwd), stdin);
+    //~ bob_pwd[strlen(bob_pwd)-1] = '\0';
+    
+    strcpy(alice_pwd, "123456");
+    strcpy(bob_pwd, "123456");
     
     printf("zhjpake start! (alice's pwd is %s and bob's pwd is %s)\n", alice_pwd, bob_pwd);
-    alice = ZHJPAKE_CTX_new(alice_pwd, "Alice", "Bob");
-    bob = ZHJPAKE_CTX_new(bob_pwd, "Bob", "Alice");
-    run_zhjpake(alice, bob);
+    
+    int i;
+    for (i = 0; i < 100; i++)
+		{
+		alice = ZHJPAKE_CTX_new(alice_pwd, "Alice", "Bob");
+		bob = ZHJPAKE_CTX_new(bob_pwd, "Bob", "Alice");
+		run_zhjpake(alice, bob);
+		}
+    
     printf("zhjpake end!\n");
     
 	return 0;

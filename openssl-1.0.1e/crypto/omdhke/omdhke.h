@@ -52,4 +52,8 @@ int OMDHKE_Client_receive(OMDHKE_Client_CTX *ctx, OMDHKE_Server_Message *message
 const BIGNUM *OMDHKE_Client_get_shared_key(OMDHKE_Client_CTX *ctx);
 const BIGNUM *OMDHKE_Server_get_shared_key(OMDHKE_Server_CTX *ctx);
 
+/* Print parameters of ctx */
+void print_server_ctx(OMDHKE_Server_CTX *ctx);
+void print_client_ctx(OMDHKE_Client_CTX *ctx);
+
 #endif
