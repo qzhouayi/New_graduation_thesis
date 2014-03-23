@@ -48,8 +48,6 @@ static unsigned char omdhke_q[]={
 	0x31,0xC7,0x17,0xC5,0x28,0x68,0xB3,0x83
 };
 		
-		
-
 
 static void OMDHKE_Client_CTX_init(OMDHKE_Client_CTX *ctx,
 	const char *password, const char *name);
@@ -84,6 +82,8 @@ static void hash1(BIGNUM *hashresult, const char *client_name,
 				const char *server_name, const BIGNUM *X_star,
 				const BIGNUM *Y, const BIGNUM *PW, const BIGNUM *K);
 
+static void OMDHKE_Client_compute_key(OMDHKE_Client_CTX *ctx);
+static void OMDHKE_Server_compute_key(OMDHKE_Server_CTX *ctx);
 static BIGNUM *Egcd(const BIGNUM *n, const BIGNUM *m, BIGNUM *x, BIGNUM *y);
 
 struct OMDHKE_Client_CTX
@@ -476,6 +476,8 @@ void OMDHKE_Server_Message_generate(OMDHKE_Server_Message *message, OMDHKE_Serve
 	/* Auth = H1(client_name, server_name, X_star, Y, PW, Ks) */
 	hash1(ctx->Auth, ctx->client_name, ctx->server_name, ctx->X_star, ctx->Y, ctx->PW, ctx->Ks);
 	
+	OMDHKE_Server_compute_key(ctx);
+	
 	message->Auth = BN_dup(ctx->Auth);
 	message->server_name = OPENSSL_strdup(ctx->server_name);
 	message->Y = BN_dup(ctx->Y);
@@ -514,7 +516,14 @@ int OMDHKE_Client_receive(OMDHKE_Client_CTX *ctx, OMDHKE_Server_Message *message
 	ctx->Y = BN_dup(message->Y);
 	BN_mod_exp(ctx->Kc, ctx->Y, ctx->x, ctx->q, ctx->ctx);
 	ctx->Auth = BN_dup(message->Auth);
-	return isvalid(ctx);
+	if (!isvalid(ctx))
+		return 0;
+	else
+		{
+		OMDHKE_Client_compute_key(ctx);
+		return 1;
+		}
+			
 	}
 
 static void OMDHKE_Client_compute_key(OMDHKE_Client_CTX *ctx)
@@ -555,34 +564,34 @@ static void print_bn(const char *name, const BIGNUM *bn)
 
 void print_server_ctx(OMDHKE_Server_CTX *ctx)
 	{
-	printf("server's parameters:\n");
-	print_bn("q", ctx->q);
-	print_bn("g", ctx->g);
-	print_bn("PW", ctx->PW);
-	printf("client_name: %s\n", ctx->client_name);
-	printf("server_name: %s\n", ctx->server_name);
-	print_bn("X", ctx->X);
-	print_bn("Y", ctx->Y);
-	print_bn("y", ctx->y);
-	print_bn("X_star", ctx->X_star);
-	print_bn("Auth", ctx->Auth);
-	print_bn("Ks", ctx->Ks);
-	print_bn("shared_key", ctx->shared_key);
+	printf("server's key:\n");
+	//~ print_bn("q", ctx->q);
+	//~ print_bn("g", ctx->g);
+	//~ print_bn("PW", ctx->PW);
+	//~ printf("client_name: %s\n", ctx->client_name);
+	//~ printf("server_name: %s\n", ctx->server_name);
+	//~ print_bn("X", ctx->X);
+	//~ print_bn("Y", ctx->Y);
+	//~ print_bn("y", ctx->y);
+	//~ print_bn("X_star", ctx->X_star);
+	//~ print_bn("Auth", ctx->Auth);
+	//~ print_bn("Ks", ctx->Ks);
+	print_bn("shared_key", OMDHKE_Server_get_shared_key(ctx));
 	}
 
 void print_client_ctx(OMDHKE_Client_CTX *ctx)
 	{
-	printf("client's parameters:\n");
-	print_bn("q", ctx->q);
-	print_bn("g", ctx->g);
-	print_bn("PW", ctx->PW);
-	printf("client_name: %s\n", ctx->client_name);
-	printf("server_name: %s\n", ctx->server_name);
-	print_bn("x", ctx->x);
-	print_bn("X", ctx->X);
-	print_bn("Y", ctx->Y);
-	print_bn("X_star", ctx->X_star);
-	print_bn("Auth", ctx->Auth);
-	print_bn("Kc", ctx->Kc);
-	print_bn("shared_key", ctx->shared_key);
+	printf("client's key:\n");
+	//~ print_bn("q", ctx->q);
+	//~ print_bn("g", ctx->g);
+	//~ print_bn("PW", ctx->PW);
+	//~ printf("client_name: %s\n", ctx->client_name);
+	//~ printf("server_name: %s\n", ctx->server_name);
+	//~ print_bn("x", ctx->x);
+	//~ print_bn("X", ctx->X);
+	//~ print_bn("Y", ctx->Y);
+	//~ print_bn("X_star", ctx->X_star);
+	//~ print_bn("Auth", ctx->Auth);
+	//~ print_bn("Kc", ctx->Kc);
+	print_bn("shared_key", OMDHKE_Client_get_shared_key(ctx));
 	}

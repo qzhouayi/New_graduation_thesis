@@ -1,0 +1,6 @@
+pspaketest.c: In function ‘run_pspake’:
+pspaketest.c:47:22: warning: initialization discards ‘const’ qualifier from pointer target type [enabled by default]
+pspaketest.c:48:20: warning: initialization discards ‘const’ qualifier from pointer target type [enabled by default]
+pspaketest.c: At top level:
+pspaketest.c:55:13: warning: ‘run’ defined but not used [-Wunused-function]
+pspaketest.c:104:13: warning: ‘test_performance’ defined but not used [-Wunused-function]

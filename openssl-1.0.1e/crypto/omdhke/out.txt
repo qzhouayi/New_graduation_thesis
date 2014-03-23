@@ -1,0 +1,7 @@
+omdhketest.c: In function ‘main’:
+omdhketest.c:102:5: error: too few arguments to function ‘run_omdhke’
+omdhketest.c:26:13: note: declared here
+make[3]: *** [all] Error 1
+make[2]: *** [subdirs] Error 1
+make[1]: *** [build_crypto] Error 1
+make: *** [top] Error 2
